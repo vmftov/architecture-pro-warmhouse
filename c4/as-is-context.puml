@@ -1,0 +1,22 @@
+@startuml WarmHouseContextAsIs
+title Тёплый дом - Диаграмма контекста - AS-IS
+
+top to bottom direction
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+Person(user, "Пользователь", "Клиент")
+System(WarmHouseSystem, "Тёплый дом", "Организует удалённое управление отоплением в доме")
+
+System_Ext(temp_sensor, "Датчик температуры", "Возвращает текущую температуру")
+System_Ext(temp_relay, "Реле обогревательного прибора", "Включает или отключает обогревательный прибор")
+
+Rel(user, WarmHouseSystem, "Просмотр температуры, Управление обогр. приборами")
+
+Rel(temp_sensor, WarmHouseSystem, "Регистрация при включении")
+Rel(WarmHouseSystem, temp_sensor, "Получение значения температуры")
+
+Rel(temp_relay, WarmHouseSystem, "Регистрация при включении")
+Rel(WarmHouseSystem, temp_relay, "Переключение реле")
+
+@enduml

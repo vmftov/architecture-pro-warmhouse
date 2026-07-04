@@ -1,0 +1,218 @@
+@startuml WarmHouse_Container_ToBe
+title Тёплый дом - Диаграмма контейнеров - TO-BE
+
+top to bottom direction
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Container.puml
+
+Person(client, "Пользователь", "Пользуется услугами системы")
+Person(admin, "Администратор", "Управляет внутренними данными системы")
+Person(support_cmd, "Команда по обслуживанию клиентов", "Предоставляют поддержку пользователям")
+Person(sales_cmd, "Команда по продажам и маркетингу", "Продвигают новые модульные комплекты")
+
+System_Boundary(warm_house_system, "Компания «Тёплый дом»") {  
+  Container(msg_broker, "Брокер сообщений", "Kafka", "")
+  
+  Boundary(device_management_boundary, "Управление устройствами") {
+    Container(device_service, "Сервис взаимодействия с устройствами", "", "(фасад для устройств)")
+
+    Container(device_catalog, "Каталог устройств", ".NET", "Управляет списками сертифицированных устройств и их метаданными")
+    Container(device_catalog_db, "БД каталога устройств", "PostgreSQL", "Хранит списки сертифицированных устройств и их метаданные")
+  
+    Container(device_config_service, "Сервис конфигурации устройств", ".NET", "Управляет данными зарегистрированных устройств пользователей")
+    Container(device_config_db, "БД конфигурации устройств", "PostgreSQL", "Хранит данные зарегистрированных устройств пользователей")
+  
+    Container(telemetry_service, "Сервис телеметрии", ".NET", "Управляет (CRUD) телеметрией")
+    Container(telemetry_db, "БД телеметрии", "ClickHouse", "Хранит временные ряды числовых значений телеметрии")
+  }
+  
+  Boundary(video_management_boundary, "Управление видеонаблюдением") {
+    Container(video_streaming_service, "Сервис управления видео", "", "")
+    Container(video_streaming_db, "БД метаданных видео", "PostgreSQL", "")
+  }
+
+  Boundary(device_automation_boundary, "Автоматизация") {
+    Container(device_automation_service, "Сервис автоматизации устройств", ".NET", "")
+    Container(device_automation_db, "БД автоматизации устройств", "PostgreSQL", "Хранит сценарии автоматизации")
+  }
+  
+  Boundary(admin_boundary, "Администрирование") {
+    Container(admin_web_app, "Web-приложение администратора", "React, JS", "")
+    Container(admin_web_api, "Web-API администратора", ".NET", "")
+  }
+  
+  Boundary(client_management_boundary, "Пользователи") {
+    Container(client_web_app, "Web-приложение пользователя", "React, JS", "")
+    Container(client_mobile_app, "Мобильное приложение пользователя", "Native", "")
+    Container(client_api, "Web-API пользователя", ".NET", "")
+    
+    Container(client_identity_service, "Сервис данных пользователя", "", "Аутентификация, авторизация и управление данными пользователей")
+    Container(client_identity_db, "БД данных пользователя", "PostgreSQL", "Хранит данные пользователя")
+  }
+
+  Boundary(stat_and_report_boundary, "Статистика и отчёты") {
+    Container(stat_report_service, "Сервис статистики и отчётов", "", "")
+    Container(stat_report_db, "БД отчётов", "PostgreSQL", "")
+  }
+  
+  Boundary(sales_boundary, "Маркетинг") {
+    Container(sales_web_app, "Web-приложение отдела маркетинга", "React, JS", "")
+    Container(sales_web_api, "Web-API отдела маркетинга", ".NET", "")
+  }
+
+  Boundary(billing_boundary, "Платежи") {
+    Container(billing_service, "Сервис тарифов и платежей", "", "")
+    Container(pricing_catalog_db, "БД тарифов", "PostgreSQL", "Хранит тарифную сетку, правила применения скидок и т.п.")
+  }
+
+  Boundary(subscription_boundary, "Подписки") {
+    Container(subscription_manager, "Сервис подписок", "", "")
+    Container(subscription_db, "БД подписок", "PostgreSQL", "Хранит активные и историю подписок")
+  }
+  
+  Boundary(support_boundary, "Поддержка пользователей") {
+    Container(support_web_app, "Web-приложение службы поддержки", "React, JS", "")
+    Container(support_web_api, "Web-API службы поддержки", ".NET", "")
+  }
+  
+  Boundary(monitoring_and_logging_boundary, "Мониторинг и логирование") {
+    Container(logging_system, "Система логирования и мониторинга", "ELK", "(готовая система без детализации)")
+  }
+  
+  Boundary(notification_boundary, "Выполнение оповещений") {
+    Container(notify_service, "Сервис оповещений", "", "")
+    Container(notify_db, "БД оповещений", "PostgreSQL", "(для гарантии единой доставки)")
+  }
+}
+
+System_Ext(home_hub, "Хаб", "Обобщенный хаб, связывающий систему и устройства")
+System_Ext(std_sensor, "Датчик", "Обобщенный датчик, работающий по стандартному протоколу")
+System_Ext(std_relay, "Реле", "Обобщенное реле, работающее по стандартному протоколу")
+System_Ext(surveillance_cam, "Камера видеонаблюдения", "Отправляет видеопоток")
+
+System_Ext(cloud_video_store, "Сервис хранения и управления видеозаписями", "Хранит видео с камер видеонаблюдения и обеспечивает стриминг по Presigned URL")
+System_Ext(payment_service, "Платёжный агрегатор", "Предоставляет услуги по выполнению платежей согласно законодательству")
+System_Ext(ext_notify_service, "Сервис оповещений", "Предоставляет услуги по надежной доставке оповещений (e-mail, СМС, звонок, мессенджеры)")
+
+' ВЫРАВНИВАНИЕ
+
+Lay_Down(client, warm_house_system)
+Lay_Down(admin, warm_house_system)
+Lay_Down(support_cmd, warm_house_system)
+Lay_Down(sales_cmd, warm_house_system)
+
+Lay_Down(device_service, home_hub)
+Lay_Down(client_management_boundary, msg_broker)
+
+' ПОЛЬЗОВАТЕЛИ
+
+Rel(client, client_web_app, "", "")
+Rel(client_web_app, client_api, "Подключение устройства, Удаленное управление домом, Просмотр телеметрии", "HTTPS, WebSocket")
+Rel(cloud_video_store, client_web_app, "Видеопоток по Presigned URL", "TCP/IP, WebRTC")
+
+Rel(client, client_mobile_app, "", "")
+Rel(client_mobile_app, client_api, "Подключение устройства, Удаленное управление домом, Просмотр телеметрии", "HTTPS, WebSocket")
+Rel(cloud_video_store, client_mobile_app, "Видеопоток по Presigned URL", "TCP/IP, WebRTC")
+
+Rel(client_api, device_catalog, "Получение каталога устройств", "")
+Rel(client_api, device_config_service, "Управление данными устройств", "")
+Rel(client_api, telemetry_service, "Получение телеметрии", "")
+Rel(client_api, video_streaming_service, "Получение метаданных видеопотока, Presigned URL", "")
+Rel(client_api, device_automation_service, "Управление/загрузка сценариев автоматизации устройств", "")
+
+Rel(client_api, msg_broker, "Действия пользователя, Команды")
+Rel(msg_broker, client_api, "События (о проведении платежа и т.д.)")
+Rel(client_api, logging_system, "Логи")
+
+Rel(client_api, client_identity_service, "")
+Rel(client_identity_service, client_identity_db, "")
+
+' АДМИНИСТРАТОР
+
+Rel(admin, admin_web_app, "", "")
+Rel(admin_web_app, admin_web_api, "Управление метаданными устройств", "HTTPS, WebSocket")
+
+Rel(admin_web_api, device_catalog, "Управление метаданными устройств", "")
+
+' ПОДДЕРЖКА
+
+Rel(support_cmd, support_web_app, "", "")
+Rel(support_web_app, support_web_api, "Ведение диалога с пользователями, Анализ проблемных ситуаций", "HTTPS, WebSocket")
+
+Rel(support_web_api, stat_report_service, "Запрос создания/получение отчётов")
+Rel(msg_broker, support_web_api, "Событие о готовности отчёта")
+
+' МАРЕКТОЛОГИ
+
+Rel(sales_cmd, sales_web_app, "", "")
+Rel(sales_web_app, sales_web_api, "Анализ работы системы, Формирование каталога, Выполнение рассылок", "HTTPS, WebSocket")
+
+Rel(sales_web_api, stat_report_service, "Запрос создания/получение отчётов")
+Rel(msg_broker, sales_web_api, "Событие о готовности отчёта")
+
+Rel(sales_web_api, device_catalog, "Управление каталогом устройств", "")
+Rel(sales_web_api, billing_service, "Управление тарифами", "")
+
+' СТАТИСТИКА И ОТЧЁТЫ
+
+Rel(msg_broker, stat_report_service, "Действия пользователя, Телеметрия")
+
+Rel(stat_report_service, stat_report_db, "Сохранение/чтение отчётов")
+Rel(stat_report_service, msg_broker, "Событие о готовности отчёта")
+
+' ТАРИФЫ И ПОДПИСКИ
+
+Rel(subscription_manager, subscription_db, "", "")
+
+Rel(billing_service, pricing_catalog_db, "Управление тарифами", "")
+Rel(billing_service, subscription_manager, "Получение сведений о подписках, Управление подписками", "")
+Rel(billing_service, payment_service, "Выполнение платежа", "")
+Rel(billing_service, msg_broker, "Событие о завершении платежа", "")
+
+' ОПОВЕЩЕНИЯ
+
+Rel(msg_broker, notify_service, "Оповещения и события", "")
+Rel(notify_service, notify_db, "", "")
+Rel(notify_service, ext_notify_service, "", "")
+
+' ЛОГИ
+
+Rel(msg_broker, logging_system, "Действия пользователя, Логи")
+
+' УСТРОЙСТВА
+
+Rel(device_catalog, device_catalog_db, "", "")
+
+Rel(home_hub, std_relay, "Передача команд, Контроль состояния", "LAN, Wi-Fi, Bluetooth, Zigbee, Z-Wave, Custom")
+Rel(std_sensor, home_hub, "Передача телеметрии", "LAN, Wi-Fi, Bluetooth, Zigbee, Z-Wave, Custom")
+
+Rel(home_hub, surveillance_cam, "Поворот камеры", "LAN, Wi-Fi, Custom")
+Rel(surveillance_cam, home_hub, "Видеопоток", "LAN, Wi-Fi, Custom")
+
+Rel(device_service, home_hub, "Команды", "TCP/IP, MQTT")
+Rel(home_hub, device_service, "Телеметрия и метаданные видеопотока", "TCP/IP, MQTT")
+
+Rel(home_hub, cloud_video_store, "Видеопоток")
+Rel(msg_broker, video_streaming_service, "Метаданные видеопотока")
+Rel(video_streaming_service, video_streaming_db, "Метаданные видеопотока")
+Rel(video_streaming_service, cloud_video_store, "Получение Presigned URL")
+
+Rel(device_service, msg_broker, "Телеметрия, Метаданные видеопотока, Ошибки")
+Rel(msg_broker, device_service, "Команды")
+
+Rel(msg_broker, telemetry_service, "Телеметрия")
+Rel(telemetry_service, telemetry_db, "Сохранение/чтение телеметрии")
+
+Rel(msg_broker, device_automation_service, "Телеметрия")
+Rel(device_automation_service, msg_broker, "Событие применения автоматизации, Событие оповещения, Ошибки")
+
+Rel(msg_broker, device_automation_service, "Событие об изменении конфигурации устройств")
+Rel(device_automation_service, device_automation_db, "Управление/загрузка сценариев")
+Rel(device_automation_service, device_catalog, "Получение метаданных устройств")
+Rel(device_automation_service, device_config_service, "Получение конфигурации подключенных устройств")
+Rel(device_automation_service, telemetry_service, "Получение телеметрии при инициализации", "")
+
+Rel(device_config_service, device_config_db, "")
+Rel(device_config_service, device_catalog, "Получение метаданных")
+
+@enduml

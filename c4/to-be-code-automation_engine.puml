@@ -1,0 +1,150 @@
+@startuml WarmHouse_DeviceAutomationEngine_Code_ToBe
+title Тёплый дом - Движок автоматизации устройств - Диаграмма кода - TO-BE
+
+top to bottom direction
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+class AutomationEngine {
+  + AutomationEngine(ScenarioModel model, AutomationEventPublisher eventPublisher);
+  + void ApplyTelemetry(TelemetryDto telemetry);
+  + void ApplyDeviceConfigChanges(DeviceConfigChangesDto dev);
+}
+
+' Scenarios
+
+class ScenarioModel {
+  + Scenario[] GetScenarios(Guid[] deviceIds);
+  + SensorTwin GetSensor(Guid sensorDeviceId);
+  + RelayTwin GetRelay(Guid relayDeviceId);
+  + void ApplyTelemetry(TelemetryDto telemetry);
+  + void ResetDevice(Guid deviceId);
+}
+
+class Scenario {
+  - ScenarioModel Model;
+  - List<ScenarioCondition> Conditions;
+  - List<ScenarioAction> Actions;
+  + void Execute(ScenarioActionContext context);
+}
+
+abstract class ScenarioCondition {
+  + Guid DeviceId;
+  + bool Match(SensorPropertyValue prop);
+}
+
+class GreaterThanScenarioCondition {
+  - double ThresholdValue;
+  + bool Match(SensorPropertyValue prop);
+}
+
+GreaterThanScenarioCondition --|> ScenarioCondition
+
+class LowerThanScenarioCondition {
+  - double ThresholdValue;
+  + bool Match(SensorPropertyValue prop);
+}
+
+LowerThanScenarioCondition --|> ScenarioCondition
+
+class ScenarioActionContext {
+    + TelemetryDto Telemetry;
+    + EventPublisher EventPublisher;
+}
+
+abstract class ScenarioAction {
+    + void Execute(ScenarioActionContext context);
+}
+
+class RelayChangeAction {
+    + RelayChangeData[] Changes;
+    + void Execute(ScenarioActionContext context);
+}
+
+class RelayChangeData {
+    + Guid RelayDeviceId;
+    + Guid PhysicalDeviceId;
+    + double Value;
+}
+
+RelayChangeAction --|> ScenarioAction
+
+class EmailNotificationAction {
+    - string Title;
+    - string Content;
+    + void Execute(ScenarioActionContext context);
+}
+
+EmailNotificationAction --|> ScenarioAction
+
+' Devices
+
+abstract class DeviceTwin {
+  + Guid DeviceId;
+  + Guid PhysicalDeviceId;
+  + Guid UserId;
+}
+
+class SensorTwin {
+  + SensorPropertyValue PropertyValue;
+}
+
+SensorTwin --|> DeviceTwin
+
+struct SensorPropertyValue {
+  + DateTimeOffset Timestamp;
+  + double Value;
+}
+
+class RelayTwin {
+  + double? MinValue;
+  + double? MaxValue;
+}
+
+RelayTwin --|> DeviceTwin
+
+' Telemetry
+
+class TelemetryDto {
+  + TelemetryDeviceDto[] Values;
+}
+
+class TelemetryDeviceDto {
+  + Guid DeviceId;
+  + double Value;
+}
+
+' Device configuration
+
+class DeviceConfigChangesDto {
+  + Guid DeviceId;
+}
+
+' Events
+
+class EventPublisher {
+  + void PublishRelayChange(Guid userId, RelayChangeData[] changes);
+  + void SendEmail(Guid userId, string title, string content);
+}
+
+' Connections
+
+Scenario "1" o-- "1..*" ScenarioCondition : includes
+Scenario "1" o-- "1..*" ScenarioAction : includes
+AutomationEngine --> ScenarioModel : uses
+AutomationEngine --> EventPublisher : uses
+ScenarioModel "1" -- "0..*" Scenario : includes
+ScenarioModel "1" -- "0..*" DeviceTwin : includes
+ScenarioModel --> DeviceConfigChangesDto : uses
+RelayChangeAction --> EventPublisher : uses
+EmailNotificationAction --> EventPublisher : uses
+ScenarioCondition --> SensorTwin : uses
+ScenarioAction --> RelayTwin : uses
+ScenarioAction --> ScenarioActionContext : uses
+SensorTwin "1" -- "1" SensorPropertyValue : includes
+TelemetryDto "1" -- "0..*" TelemetryDeviceDto : includes
+ScenarioModel --> TelemetryDto : uses
+RelayChangeAction --> RelayChangeData : uses
+EventPublisher --> RelayChangeData : uses
+
+@enduml
