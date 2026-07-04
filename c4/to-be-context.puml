@@ -1,0 +1,31 @@
+@startuml WarmHouse_Context_ToBe
+title Тёплый дом - Диаграмма контекста - TO-BE
+
+top to bottom direction
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Context.puml
+
+Person(client, "Пользователь", "Пользуется услугами системы")
+Person(admin, "Администратор", "Управляет внутренними данными системы")
+Person(support_cmd, "Команда по обслуживанию клиентов", "Предоставляют поддержку пользователям")
+Person(sails_cmd, "Команда по продажам и маркетингу", "Продвигают новые модульные комплекты")
+
+System(warm_house_system, "Тёплый дом", "Организует «умный» дом - обеспечивает UI, настройку, инфраструктуру, хранение данных")
+
+System_Ext(device, "Умные устройства", "Включает хаб, датчики, реле, камеры наблюдения и устройства подключаемые независимо")
+
+System_Ext(cloud_video_store, "Сервис хранения и управления видеозаписями", "Хранит видео с камер видеонаблюдения и обеспечивает стриминг по Presigned URL")
+System_Ext(payment_service, "Платёжный агрегатор", "Предоставляет услуги по выполнению платежей согласно законодательству")
+System_Ext(notify_service, "Сервис оповещений", "Предоставляет услуги по надежной доставке оповещений (e-mail, СМС, звонок, мессенджеры)")
+
+Rel(client, warm_house_system, "Подключение устройства, Удаленное управление домом, Просмотр телеметрии и видео", "HTTPS, WebSocket, WebRTC")
+Rel(admin, warm_house_system, "Управление метаданными устройств", "HTTPS, WebSocket")
+Rel(support_cmd, warm_house_system, "Ведение диалога с пользователями, Анализ проблемных ситуаций", "HTTPS, WebSocket")
+Rel(sails_cmd, warm_house_system, "Анализ работы системы, Формирование каталога, Выполнение рассылок", "HTTPS, WebSocket")
+
+Rel(warm_house_system, device, "Управляющие/ программирующие команды, Получение данных", "HTTPS, TCP/IP, RTSP")
+Rel(warm_house_system, payment_service, "Проведение платежей за подписку", "HTTPS")
+Rel(warm_house_system, cloud_video_store, "Сохранение/чтение видеопотока, Управление видеофайлами", "HTTPS, TCP/IP")
+Rel(warm_house_system, notify_service, "Оповещение о важных событиях", "HTTPS, SMTP")
+
+@enduml

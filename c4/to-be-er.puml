@@ -1,0 +1,194 @@
+@startuml WarmHouse_EntityRelashionship_ToBe
+title Тёплый дом - Логическая ER-диаграмма - TO-BE
+
+skinparam linetype ortho
+
+package users <<Rectangle>> #line.dashed {
+    entity user {
+        * user_id: uuid «PK»
+        --
+        * username: varchar(128)
+        * password_hash: text
+        * password_salt: text
+        phone_number: varchar(30)
+        email_address: varchar(255)
+        telegram_chat_id: text
+    }
+}
+
+package houses <<Rectangle>> #line.dashed {
+    entity house {
+        * house_id: uuid «PK»
+        --
+        * display_name: varchar(128)
+        * address: text
+    }
+
+    entity user_house {
+        * user_id: uuid «PK», «FK»
+        * house_id: uuid «PK», «FK»
+        --
+        * role: text
+    }
+
+    entity area {
+        * area_id: uuid «PK»
+        --
+        * house_id: uuid «FK»
+        * display_name: varchar(128)
+    }
+}
+
+user --|{ user_house
+house --|{ user_house
+house --|{ area
+
+package devices <<Rectangle>> #line.dashed {
+    entity physical_device {
+        * physical_device_id: uuid «PK»
+        --
+        * device_metadata_id: uuid «FK»
+        * serial_number: text
+        * physical_id: text
+        * parent_gateway_device_id: uuid «FK»
+        * display_name: varchar(128)
+        * status: integer
+        * area_id: uuid «FK»
+    }
+
+    note right of physical_device
+        Модуль это обычное устройство, 
+        а конкретный тип и набор возможных 
+        действий определяется по метаданным.
+    end note
+
+    entity logical_sensor {
+        * logical_sensor_id: uuid «PK»
+        --
+        * physical_device_id: uuid «FK»
+        * logical_sensor_metadata_id: uuid «FK»
+        * display_name: varchar(128)
+        current_value: float4
+    }
+
+    entity logical_relay {
+        * logical_relay_id: uuid «PK»
+        --
+        * physical_device_id: uuid «FK»
+        * logical_relay_metadata_id: uuid «FK»
+        * display_name: varchar(128)
+        current_value: float4
+    }
+}
+
+area --|{ physical_device
+physical_device --|{ logical_sensor
+physical_device --|{ logical_relay
+' gateway
+physical_device --|{ physical_device 
+
+package telemetry <<Rectangle>> #line.dashed {
+    entity logical_sensor_telemetry {
+        * logical_sensor_telemetry_id: bigint «PK»
+        --
+        * logical_sensor_id: uuid «FK»
+        * timestamp: timestamptz
+        * value: float4
+    }
+
+    entity logical_relay_values {
+        * logical_relay_values_id: bigint «PK»
+        --
+        * logical_relay_id: uuid «FK»
+        * timestamp: timestamptz
+        * value: float4
+    }
+}
+
+logical_sensor --|{ logical_sensor_telemetry
+logical_relay --|{ logical_relay_values
+
+package metadata <<Rectangle>> #line.dashed {
+    entity device_metadata {
+        * device_metadata_id: uuid «PK»
+        --
+        * device_type: text
+        * model_number: text
+        * protocol: text
+        * display_name: varchar(128)
+    }
+
+    entity logical_sensor_metadata {
+        * logical_sensor_metadata_id: uuid «PK»
+        --
+        * endpoint_name: text
+        * telemetry_unit: text
+        * device_metadata_id: uuid «FK»
+    }
+
+    entity logical_relay_metadata {
+        * logical_relay_metadata_id: uuid «PK»
+        --
+        * endpoint_name: text
+        min_value: float4
+        max_value: float4
+        * device_metadata_id: uuid «FK»
+    }
+
+    entity logical_relay_allowed_values_metadata {
+        * allowed_value_metadata_id: integer «PK»
+        --
+        * logical_relay_metadata_id: uuid «FK»
+        * value: float4
+    }
+}
+
+device_metadata --|{ logical_sensor_metadata
+device_metadata --|{ logical_relay_metadata
+device_metadata --|{ physical_device
+logical_sensor_metadata --|{ logical_sensor
+logical_relay_metadata --|{ logical_relay
+logical_relay_metadata --|{ logical_relay_allowed_values_metadata
+
+package automation <<Rectangle>> #line.dashed {
+    entity scenario {
+        * scenario_id: uuid «PK»
+        --
+        * house_id: uuid «FK»
+        display_name: varchar(128)
+        enabled: boolean
+    }
+
+    entity scenario_condition {
+        * scenario_condition_id: uuid «PK»
+        --
+        * scenario_id: uuid «FK»
+        * logical_sensor_id: uuid «FK»
+        * type: integer
+        extra_properties: jsonb
+    }
+
+    entity scenario_action {
+        * scenario_action_id: uuid «PK»
+        --
+        * scenario_id: uuid «FK»
+        * type: integer
+        extra_properties: jsonb
+    }
+
+    entity scenario_relay_change {
+        * scenario_action_id: uuid «PK»
+        * logical_relay_id: uuid «PK»
+        --
+        * value: float4
+    }
+}
+
+house --|{ scenario
+scenario --|{ scenario_condition
+scenario --|{ scenario_action
+logical_sensor --|{ scenario_condition
+scenario_action --|{ scenario_relay_change
+logical_relay --|{ scenario_relay_change
+
+@enduml

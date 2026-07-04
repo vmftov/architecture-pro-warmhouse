@@ -1,0 +1,66 @@
+@startuml WarmHouse_DeviceAutomationService_Component_ToBe
+title Тёплый дом - Сервис автоматизации устройств - Диаграмма компонентов - TO-BE
+
+top to bottom direction
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+Container_Boundary(device_automation_service, "Сервис автоматизации устройств") {
+    Component(scenario_controller, "ScenariosController", "ASP.NET Core Controller", "Управляет (CRUD) сценариями автоматизации устройств")
+    Component(device_config_changes_handler, "DeviceConfigChangesHandler", "Kafka consumer", "Обрабатывает событие изменения конфигурации")
+    Component(telemetry_changes_handler, "TelemetryChangesHandler", "Kafka consumer", "Обрабатывает событие изменения телеметрии")
+  
+    Component(scenario_repository, "ScenarioRepository", "EF Core repository", "Обеспечивает доступ к сценариям автоматизации устройств")
+    Component(device_repository, "DeviceRepository", "C# class", "Обеспечивает доступ к данным датчиков, реле и их метаданных")
+    Component(device_config_repository, "DeviceConfigRepository", "C# class", "Обеспечивает доступ к конфигурации устройств")
+    Component(telemetry_repository, "TelemetryRepository", "C# class", "Обеспечивает доступ к данным телеметрии")
+
+    Boundary(automation_engine_boundary, "Движок автоматизации") {
+        Component(automation_engine, "AutomationEngine", "C# class", "Контролирует состояние устройств и выполняет сценарии")
+        Component(scenario_model, "ScenarioModel", "C# class", "Внутренняя модель сценариев")
+        Component(automation_event_publisher, "AutomationEventPublisher", "Kafka producer", "Отправляет событие о применении автоматизации")
+    }
+}
+
+Container(device_automation_db, "БД автоматизации устройств", "PostgreSQL", "Хранит сценарии автоматизации")
+Container(msg_broker, "Брокер сообщений", "Kafka", "")
+
+Container(client_api, "Web-API пользователя", ".NET", "")
+Container(device_catalog, "Каталог устройств", ".NET", "Управляет списками сертифицированных устройств и их метаданными")
+Container(device_config_service, "Сервис конфигурации устройств", ".NET", "Управляет данными зарегистрированных устройств пользователей")
+Container(telemetry_service, "Сервис телеметрии", ".NET", "Управляет (CRUD) телеметрией")
+
+Rel(client_api, scenario_controller, "Управление/загрузка сценариев автоматизации устройств")
+
+Rel(scenario_controller, scenario_repository, "Управление/загрузка сценариев")
+Rel(scenario_repository, device_automation_db, "Управление/загрузка сценариев")
+
+Rel(msg_broker, device_config_changes_handler, "Событие об изменении конфигурации устройств")
+Rel(device_config_changes_handler, automation_engine, "Сигнализация о наличии и характере изменениий устройства на основе данных события")
+
+Rel(msg_broker, telemetry_changes_handler, "Новое значение(я) телеметрии")
+Rel(telemetry_changes_handler, automation_engine, "Передача телеметрии из события")
+
+Rel(scenario_model, telemetry_repository, "Загрузка актуальной телеметрии в момент инициализации")
+Rel(telemetry_repository, telemetry_service, "Загрузка актуальной телеметрии")
+
+Rel(scenario_model, device_repository, "Загрузка метаданных устройств")
+Rel(device_repository, device_catalog, "Загрузка метаданных устройств")
+
+Rel(scenario_model, device_config_repository, "Загрузка конфигурации подключенных устройств")
+Rel(device_config_repository, device_config_service, "Загрузка конфигурации устройств")
+
+Rel(scenario_model, scenario_repository, "Загрузка сценариев")
+
+Rel(automation_engine, scenario_model, "Поиск сценариев")
+Rel(automation_engine, scenario_model, "Обновление значения телеметрии устройства")
+Rel(automation_engine, scenario_model, "Сброс модели для устройства")
+
+Rel(automation_engine, automation_event_publisher, "Данные применения автоматизации, Данные оповещения, Ошибки")
+Rel(automation_event_publisher, msg_broker, "Событие применения автоматизации, Событие оповещения, Ошибки")
+
+Lay_Down(client_api, device_automation_service)
+Lay_Down(scenario_controller, automation_engine_boundary)
+Lay_Right(telemetry_repository, scenario_repository)
+
+@enduml

@@ -1,0 +1,29 @@
+@startuml WarmHouse_Container_ToBe
+title Задание 6 - Взаимодействие сервисов
+
+top to bottom direction
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Container.puml
+
+Person(client, "Пользователь", "")
+
+System_Boundary(warm_house_system, "Компания «Тёплый дом»") {  
+   Container(msg_broker, "Брокер сообщений", "Kafka", "")
+  
+   Container(monolith, "Монолит", "GO", "")
+   Container(device_service, "Сервис управления устройствами", ".NET", "")
+   Container(telemetry_service, "Сервис телеметрии", "Python", "")
+
+   Container(device_db, "БД устройств", "PostgreSQL", "")
+   Container(telemetry_db, "БД телеметрии", "PostgreSQL", "")
+}
+
+Rel(client, monolith, "Создание датчика, получение списка датчиков", "HTTP/REST")
+Rel(monolith, device_service, "Передача запросов/коанд пользователя", "HTTP/REST")
+Rel(monolith, telemetry_service, "Получение телеметрии датчиклв", "HTTP/REST")
+Rel(device_service, msg_broker, "Отправка сообщения о появлении телеметрии. В реальной системе, другой сервис транслировал бы это сообщение от датчика", "")
+Rel(msg_broker, telemetry_service, "Телеметрия", "")
+Rel(device_service, device_db, "Управление данными устройств", "")
+Rel(telemetry_service, telemetry_db, "Управление телеметрией", "")
+
+@enduml
